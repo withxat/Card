@@ -2,17 +2,19 @@
 
 This package contains the Cloudflare Worker that powers Card.
 
-The Worker returns a terminal-friendly card for command-line clients and proxies
-browser traffic to the original site.
+It returns a terminal-friendly card for command-line clients, redirects browsers
+from HTTP to HTTPS when configured, and proxies normal browser traffic to the
+original site.
 
 ## Behavior
 
-| Request                            | Result                        |
-| ---------------------------------- | ----------------------------- |
-| `curl https://xat.sh/`             | Returns the terminal card     |
-| `curl -L http://xat.sh/`           | Follows HTTPS redirect if any |
-| Browser visit to `https://xat.sh/` | Proxies to the origin website |
-| `https://xat.sh/about`             | Proxies to the origin website |
+| Request                   | Result                             |
+| ------------------------- | ---------------------------------- |
+| `curl xat.sh`             | Returns the terminal card          |
+| `curl http://xat.sh/`     | Returns the terminal card          |
+| Browser `http://xat.sh/`  | Redirects to HTTPS when configured |
+| Browser `https://xat.sh/` | Proxies to the origin website      |
+| `https://xat.sh/about`    | Proxies to the origin website      |
 
 Command-line clients are detected by `User-Agent`. The current list includes
 curl, wget, HTTPie, xh, aria2, Python Requests, Go's default HTTP client, and
@@ -32,14 +34,12 @@ Test the card response:
 curl -A 'curl/8.7.1' http://127.0.0.1:8787/
 ```
 
-Test browser-style passthrough:
+Test browser-style behavior:
 
 ```sh
-curl -A 'Mozilla/5.0' http://127.0.0.1:8787/
+curl -i -A 'Mozilla/5.0' http://127.0.0.1:8787/
+curl -i -A 'Mozilla/5.0' http://127.0.0.1:8787/about
 ```
-
-The browser-style request attempts to fetch the configured origin behavior, so
-it is useful for checking that Card does not intercept normal browser traffic.
 
 ## Build
 
@@ -72,7 +72,7 @@ The test suite covers:
 - card responses;
 - browser passthrough;
 - non-root passthrough;
-- optional browser-only HTTPS redirects;
+- browser-only HTTPS redirects;
 - ANSI-styled default output.
 
 ## Deploy
@@ -91,7 +91,13 @@ pnpm --filter @withxat/card-worker run deploy
 
 The deploy script runs `pnpm build` first and then `wrangler deploy`.
 
-## Configuration
+Verify:
+
+```sh
+curl xat.sh
+```
+
+## Cloudflare Setup
 
 Edit [`wrangler.jsonc`](wrangler.jsonc):
 
@@ -104,7 +110,10 @@ Edit [`wrangler.jsonc`](wrangler.jsonc):
 			"pattern": "xat.sh",
 			"zone_name": "xat.sh"
 		}
-	]
+	],
+	"vars": {
+		"BROWSER_HTTPS_REDIRECT": "true"
+	}
 }
 ```
 
@@ -113,28 +122,31 @@ For your own domain, change both `pattern` and `zone_name`.
 The matching DNS record must be Cloudflare `Proxied`. If it is `DNS only`,
 requests go directly to the origin and the Worker will not run.
 
-## Custom Card Text
+## Route Shape
 
-The default neofetch-style card lives in [`src/index.ts`](src/index.ts).
+Use the apex route pattern:
 
-For a fully static override, you can also add `CARD_TEXT` to `vars` in
-`wrangler.jsonc`:
-
-```jsonc
-{
-	"vars": {
-		"CARD_TEXT": "Name\n---\nSite: https://example.com\n"
-	}
-}
+```txt
+xat.sh
 ```
 
-`CARD_TEXT` replaces the built-in styled card exactly, so include any ANSI escape
-codes yourself if you still want color.
+This keeps Card focused on:
 
-## Optional Browser HTTPS Redirect
+- `http://xat.sh/`
+- `https://xat.sh/`
 
-If you disable Cloudflare's global **Always Use HTTPS** setting but still want
-browsers to move from HTTP to HTTPS, set:
+It does not take over:
+
+- `https://xat.sh/about`
+- `https://xat.sh/blog`
+- `https://xat.sh/assets/app.js`
+
+The Worker still defensively proxies non-root paths in case the route is changed
+later.
+
+## Browser HTTPS Redirect
+
+This project uses:
 
 ```jsonc
 {
@@ -144,5 +156,33 @@ browsers to move from HTTP to HTTPS, set:
 }
 ```
 
-With that setting, command-line clients can still receive the card on plain HTTP,
-while browser requests get a `301` to HTTPS.
+With that setting:
+
+- command-line clients can receive the card on plain HTTP, so `curl xat.sh`
+  works without `-L`;
+- browsers visiting `http://xat.sh/` get a `301` redirect to
+  `https://xat.sh/`;
+- browsers visiting `https://xat.sh/` are proxied to the origin website.
+
+For this to matter, Cloudflare's global **Always Use HTTPS** should not intercept
+the request before the Worker. Prefer a more specific Redirect Rule or the
+Worker-level redirect above.
+
+## Custom Card Text
+
+The default neofetch-style card lives in [`src/index.ts`](src/index.ts).
+
+For a fully static override, you can add `CARD_TEXT` to `vars` in
+`wrangler.jsonc`:
+
+```jsonc
+{
+	"vars": {
+		"BROWSER_HTTPS_REDIRECT": "true",
+		"CARD_TEXT": "Name\n---\nSite: https://example.com\n"
+	}
+}
+```
+
+`CARD_TEXT` replaces the built-in styled card exactly, so include any ANSI escape
+codes yourself if you still want color.
