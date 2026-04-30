@@ -5,8 +5,7 @@ business card when someone visits it from the command line, while keeping the
 normal browser website untouched.
 
 ```sh
-curl https://xat.sh
-curl -L xat.sh
+curl xat.sh
 ```
 
 Browser visits still see the original website. Paths such as `/about`, `/blog`,
@@ -158,6 +157,6 @@ All scripts run through Turborepo.
 **Card** © [Xat](https://github.com/withxat), Released under the
 [MIT](https://github.com/withxat/Card/blob/main/LICENSE) License.
 
-> [Blog](https://blog.xat.sh) · GitHub [@withxat](https://github.com/withxat)
+> [Blog](https://xat.sh) · GitHub [@withxat](https://github.com/withxat)
 > · Telegram [@withxat](https://t.me/withxat) · X
 > [@withxat](https://x.com/withxat) · Email [i@xat.sh](mailto:i@xat.sh)
