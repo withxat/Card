@@ -18,14 +18,14 @@ const WHITE = `${ESC}37m`
 
 const DEFAULT_CARD = [
 	'',
-	`${CYAN}      __   __     ${BOLD}${WHITE}Xat${RESET}`,
-	`${CYAN}      \\ \\ / /     ${DIM}Design Engineer${RESET}`,
-	`${BLUE}       \\ V /      ${DIM}────────────────${RESET}`,
-	`${MAGENTA}       / . \\      ${GREEN}Site${RESET}    ${WHITE}https://xat.sh${RESET}`,
-	`${MAGENTA}      /_/ \\_\\     ${GREEN}GitHub${RESET}  ${WHITE}https://github.com/withxat${RESET}`,
+	`${CYAN}     __   __      ${BOLD}${WHITE}Xat${RESET}`,
+	`${CYAN}     \\ \\ / /      ${DIM}Design Engineer${RESET}`,
+	`${BLUE}      \\ V /       ${DIM}────────────────${RESET}`,
+	`${MAGENTA}      / . \\       ${GREEN}Site${RESET}    ${WHITE}https://xat.sh${RESET}`,
+	`${MAGENTA}     /_/ \\_\\      ${GREEN}GitHub${RESET}  ${WHITE}https://github.com/withxat${RESET}`,
 	`${YELLOW}                  ${GREEN}X${RESET}       ${WHITE}https://x.com/withxat${RESET}`,
-	`${YELLOW}  ${BOLD}curl xat.sh${RESET}      ${GREEN}Email${RESET}   ${WHITE}i@xat.sh${RESET}`,
-	`${DIM}                  Code with Love, Exploring the World.${RESET}`,
+	`${YELLOW}  ${BOLD}curl -L xat.sh${RESET}  ${GREEN}Email${RESET}   ${WHITE}i@xat.sh${RESET}`,
+	`${DIM}                  Code with Love, Explore the World.${RESET}`,
 	'',
 ].join('\n')
 
