@@ -74,7 +74,7 @@ All scripts run through Turborepo.
 ## Deploy
 
 ```sh
-pnpm --filter @withxat/card-worker deploy
+pnpm --filter @withxat/card-worker run deploy
 ```
 
 The deploy script builds `apps/worker/src/index.ts` with tsdown before handing

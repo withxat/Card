@@ -143,3 +143,6 @@ vite.config.ts.timestamp-*
 
 # Turborepo
 .turbo
+
+# Wrangler local state
+.wrangler
