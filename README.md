@@ -91,10 +91,6 @@ packages/ui/       Shared React component library retained from the workspace
 | `pnpm lint`      | Lint all packages              |
 | `pnpm lint:fix`  | Lint and auto-fix all packages |
 
-## License
-
-[MIT](LICENSE)
-
 ## Author
 
 **Card** © [Xat](https://github.com/withxat), Released under the
