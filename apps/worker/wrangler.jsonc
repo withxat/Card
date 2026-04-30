@@ -9,5 +9,8 @@
 			"pattern": "xat.sh",
 			"zone_name": "xat.sh"
 		}
-	]
+	],
+	"vars": {
+		"BROWSER_HTTPS_REDIRECT": "true"
+	}
 }
