@@ -6,9 +6,9 @@
 	"author": "Xat <i@xat.sh>(https://xat.sh)",
 	"license": "MIT",
 	"scripts": {
-		"build": "tsc -p tsconfig.json",
-		"deploy": "wrangler deploy",
-		"dev": "wrangler dev",
+		"build": "tsdown src/index.ts --platform neutral --format esm --out-dir dist --clean",
+		"deploy": "pnpm build && wrangler deploy",
+		"dev": "wrangler dev src/index.ts",
 		"lint": "eslint",
 		"test": "vitest run src",
 		"typecheck": "tsc --noEmit"
@@ -19,6 +19,7 @@
 		"@withxat/eslint-config": "catalog:devtool",
 		"@withxat/tsconfig": "catalog:devtool",
 		"eslint": "catalog:devtool",
+		"tsdown": "^0.21.10",
 		"typescript": "catalog:devtool",
 		"vitest": "^4.0.16",
 		"wrangler": "^4.50.0"

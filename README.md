@@ -77,7 +77,9 @@ All scripts run through Turborepo.
 pnpm --filter @withxat/card-worker deploy
 ```
 
-Edit `apps/worker/wrangler.jsonc` to change the route, zone, or card text.
+The deploy script builds `apps/worker/src/index.ts` with tsdown before handing
+`dist/index.js` to Wrangler. Edit `apps/worker/wrangler.jsonc` to change the
+route, zone, or card text.
 
 ## License
 
