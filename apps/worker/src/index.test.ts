@@ -51,6 +51,20 @@ describe('worker behavior', () => {
 		assert.equal(await response.text(), 'hello from xat\n')
 	})
 
+	it('returns a styled default card when no override is configured', async () => {
+		const response = await handleRequest(
+			request('https://xat.sh/', 'curl/8.7.1'),
+			{},
+			originFetch,
+		)
+		const body = await response.text()
+
+		assert.equal(body.includes('\x1B['), true)
+		assert.match(body, /Xat/)
+		assert.match(body, /https:\/\/xat\.sh/)
+		assert.match(body, /Code with Love/)
+	})
+
 	it('passes browser root requests through to the origin site', async () => {
 		const response = await handleRequest(
 			request('https://xat.sh/', 'Mozilla/5.0 Safari/605.1.15'),

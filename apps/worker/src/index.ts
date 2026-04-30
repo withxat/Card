@@ -5,13 +5,29 @@ export interface Env {
 
 type Fetcher = (request: Request) => Promise<Response>
 
-const DEFAULT_CARD = `Xat
----
-Blog: https://xat.sh
-GitHub: https://github.com/withxat
-X: https://x.com/withxat
-Email: i@xat.sh
-`
+const ESC = '\x1B['
+const RESET = `${ESC}0m`
+const DIM = `${ESC}2m`
+const BOLD = `${ESC}1m`
+const CYAN = `${ESC}36m`
+const BLUE = `${ESC}34m`
+const MAGENTA = `${ESC}35m`
+const GREEN = `${ESC}32m`
+const YELLOW = `${ESC}33m`
+const WHITE = `${ESC}37m`
+
+const DEFAULT_CARD = [
+	'',
+	`${CYAN}      __   __     ${BOLD}${WHITE}Xat${RESET}`,
+	`${CYAN}      \\ \\ / /     ${DIM}Design Engineer${RESET}`,
+	`${BLUE}       \\ V /      ${DIM}────────────────${RESET}`,
+	`${MAGENTA}       / . \\      ${GREEN}Site${RESET}    ${WHITE}https://xat.sh${RESET}`,
+	`${MAGENTA}      /_/ \\_\\     ${GREEN}GitHub${RESET}  ${WHITE}https://github.com/withxat${RESET}`,
+	`${YELLOW}                  ${GREEN}X${RESET}       ${WHITE}https://x.com/withxat${RESET}`,
+	`${YELLOW}  ${BOLD}curl xat.sh${RESET}      ${GREEN}Email${RESET}   ${WHITE}i@xat.sh${RESET}`,
+	`${DIM}                  Code with Love, Exploring the World.${RESET}`,
+	'',
+].join('\n')
 
 const COMMAND_LINE_CLIENTS = [
 	'curl',

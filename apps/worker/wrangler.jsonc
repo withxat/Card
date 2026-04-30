@@ -9,8 +9,5 @@
 			"pattern": "xat.sh",
 			"zone_name": "xat.sh"
 		}
-	],
-	"vars": {
-		"CARD_TEXT": "Xat\n---\nBlog: https://xat.sh\nGitHub: https://github.com/withxat\nX: https://x.com/withxat\nEmail: i@xat.sh\n"
-	}
+	]
 }
