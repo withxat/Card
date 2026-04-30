@@ -7,7 +7,7 @@ type Fetcher = (request: Request) => Promise<Response>
 
 const DEFAULT_CARD = `Xat
 ---
-Blog: https://blog.xat.sh
+Blog: https://xat.sh
 GitHub: https://github.com/withxat
 X: https://x.com/withxat
 Email: i@xat.sh

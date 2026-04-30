@@ -11,6 +11,6 @@
 		}
 	],
 	"vars": {
-		"CARD_TEXT": "Xat\n---\nBlog: https://blog.xat.sh\nGitHub: https://github.com/withxat\nX: https://x.com/withxat\nEmail: i@xat.sh\n"
+		"CARD_TEXT": "Xat\n---\nBlog: https://xat.sh\nGitHub: https://github.com/withxat\nX: https://x.com/withxat\nEmail: i@xat.sh\n"
 	}
 }
