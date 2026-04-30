@@ -1,15 +1,16 @@
 {
-	"name": "monorepo-template",
+	"name": "card",
 	"type": "module",
 	"version": "1.0.0",
 	"private": true,
 	"packageManager": "pnpm@10.32.1",
-	"description": "A monorepo template for TypeScript projects",
+	"description": "A Cloudflare Worker domain card for command-line visitors",
 	"author": "Xat <i@xat.sh>(https://xat.sh)",
 	"license": "MIT",
 	"scripts": {
 		"dev": "turbo dev",
 		"build": "turbo build",
+		"test": "turbo test",
 		"typecheck": "turbo typecheck",
 		"lint": "turbo lint",
 		"lint:fix": "turbo lint -- --fix"

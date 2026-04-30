@@ -1,0 +1,16 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "card",
+	"main": "src/index.ts",
+	"compatibility_date": "2026-04-30",
+	"workers_dev": false,
+	"routes": [
+		{
+			"pattern": "xat.sh",
+			"zone_name": "xat.sh"
+		}
+	],
+	"vars": {
+		"CARD_TEXT": "Xat\n---\nBlog: https://blog.xat.sh\nGitHub: https://github.com/withxat\nX: https://x.com/withxat\nEmail: i@xat.sh\n"
+	}
+}
