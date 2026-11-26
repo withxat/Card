@@ -93,8 +93,10 @@ packages/ui/       Shared React component library retained from the workspace
 
 ## Author
 
-**Card** © [Xat](https://github.com/withxat), Released under the
-[MIT](https://github.com/withxat/Card/blob/main/LICENSE) License.
+**Card** © [Xat](https://github.com/withxat), released under the
+[MIT](LICENSE) License.<br>
+Authored and maintained by Xat with help from contributors
+([list](https://github.com/withxat/Card/graphs/contributors)).
 
 > [Blog](https://xat.sh) · GitHub [@withxat](https://github.com/withxat) ·
 > Telegram [@withxat](https://t.me/withxat) · X
