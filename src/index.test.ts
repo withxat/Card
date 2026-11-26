@@ -26,6 +26,8 @@ async function noOrigin(): Promise<Response> {
 	throw new Error('origin must not be fetched')
 }
 
+async function noSleep(): Promise<void> {}
+
 const card: CardConfig = {
 	links: [
 		{ label: 'Site', value: 'https://example.com' },
@@ -62,7 +64,7 @@ describe('card output', () => {
 		const response = await handleRequest(
 			request('https://example.com/', 'curl/8.7.1'),
 			{},
-			{ card, originFetch: noOrigin },
+			{ card, originFetch: noOrigin, sleep: noSleep },
 		)
 		const body = await response.text()
 
@@ -73,6 +75,124 @@ describe('card output', () => {
 		assert.match(body, /curl example\.com/)
 		assert.match(body, /https:\/\/example\.com/)
 		assert.match(body, /Hello\./)
+	})
+
+	it('streams line by line with ease-out pacing and matches ?static byte for byte', async () => {
+		const delays: number[] = []
+		const animated = await handleRequest(
+			request('https://example.com/', 'curl/8.7.1'),
+			{},
+			{
+				card,
+				originFetch: noOrigin,
+				sleep: async (ms) => {
+					delays.push(ms)
+				},
+			},
+		)
+		const staticDelays: number[] = []
+		const immediate = await handleRequest(
+			request('https://example.com/?static', 'curl/8.7.1'),
+			{},
+			{
+				card,
+				originFetch: noOrigin,
+				sleep: async (ms) => {
+					staticDelays.push(ms)
+				},
+			},
+		)
+		const animatedBody = await animated.text()
+		const staticBody = await immediate.text()
+		const contentLines = staticBody.split('\n').filter(line => line !== '')
+
+		assert.equal(animatedBody, staticBody)
+		assert.equal(delays.length, contentLines.length - 1)
+		assert.equal(delays[0]! < delays.at(-1)!, true)
+		assert.deepEqual(staticDelays, [])
+	})
+
+	it('skips streaming for ?plain, animate: false, and HEAD requests', async () => {
+		const delays: number[] = []
+		const record = async (ms: number): Promise<void> => {
+			delays.push(ms)
+		}
+
+		await (await handleRequest(
+			request('https://example.com/?plain', 'curl/8.7.1'),
+			{},
+			{ card, originFetch: noOrigin, sleep: record },
+		)).text()
+		await (await handleRequest(
+			request('https://example.com/', 'curl/8.7.1'),
+			{},
+			{ card: { ...card, animate: false }, originFetch: noOrigin, sleep: record },
+		)).text()
+		await handleRequest(
+			new Request('https://example.com/', {
+				headers: { 'user-agent': 'curl/8.7.1' },
+				method: 'HEAD',
+			}),
+			{},
+			{ card, originFetch: noOrigin, sleep: record },
+		)
+
+		assert.deepEqual(delays, [])
+	})
+
+	it('caps total animation duration on tall cards and stops when cancelled', async () => {
+		const tallCard: CardConfig = {
+			...card,
+			links: Array.from({ length: 20 }, (_, index) => ({
+				label: `Link${index}`,
+				value: `https://example.com/${index}`,
+			})),
+		}
+		const delays: number[] = []
+		const response = await handleRequest(
+			request('https://example.com/', 'curl/8.7.1'),
+			{},
+			{
+				card: tallCard,
+				originFetch: noOrigin,
+				sleep: async (ms) => {
+					delays.push(ms)
+				},
+			},
+		)
+
+		await response.text()
+		assert.equal(delays.reduce((sum, ms) => sum + ms, 0) <= 660, true)
+
+		let aborted = false
+		let sleepCalls = 0
+		const cancellable = await handleRequest(
+			request('https://example.com/', 'curl/8.7.1'),
+			{},
+			{
+				card,
+				originFetch: noOrigin,
+				sleep: (_ms, signal) => new Promise((resolve) => {
+					sleepCalls++
+					signal?.addEventListener('abort', () => {
+						aborted = true
+						resolve()
+					}, { once: true })
+				}),
+			},
+		)
+		const reader = cancellable.body!.getReader()
+
+		await reader.read()
+		await reader.read()
+
+		const pending = reader.read()
+
+		await reader.cancel()
+		await pending
+
+		assert.equal(sleepCalls, 1)
+		assert.equal(aborted, true)
 	})
 
 	it('drops ANSI escapes with ?plain', async () => {
@@ -145,7 +265,7 @@ describe('domain with its own website', () => {
 		const curlResponse = await handleRequest(
 			request('http://xat.sh/', 'curl/8.7.1'),
 			env,
-			{ card, originFetch },
+			{ card, originFetch, sleep: noSleep },
 		)
 
 		assert.equal(browserResponse.status, 301)

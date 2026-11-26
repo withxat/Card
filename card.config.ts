@@ -1,6 +1,7 @@
 /* eslint-disable perfectionist/sort-objects -- keep the card in reading order */
 // Edit this file to make the card yours. `curl <your domain>` is added under the
-// logo automatically. Colors: black, red, green, yellow, blue, magenta, cyan, white.
+// logo automatically. Set `animate: false` to disable line-by-line streaming.
+// Colors: black, red, green, yellow, blue, magenta, cyan, white.
 import { defineCard } from './src/card.js'
 
 export default defineCard({

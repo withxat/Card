@@ -52,6 +52,7 @@ export default defineCard({
 ```
 
 - `curl <your domain>` is added under the logo automatically.
+- Terminals stream the card line by line (~0.4s); set `animate: false` or pass `?static` to send it all at once.
 - Columns are aligned by terminal width, so Chinese, Japanese, and Korean text lines up.
 - `logo` is any ASCII art; [`figlet`](http://www.figlet.org/) is an easy way to make one.
 - Colors are the eight terminal colors, so the card follows each visitor's theme.
@@ -81,8 +82,9 @@ runs.
 
 | Request                         | `ORIGIN_PASSTHROUGH: "false"` | `ORIGIN_PASSTHROUGH: "true"` |
 | ------------------------------- | ----------------------------- | ---------------------------- |
-| `curl example.com`              | Card                          | Card                         |
-| `curl example.com/?plain`       | Card without colors           | Card without colors          |
+| `curl example.com`              | Animated card                 | Animated card                |
+| `curl example.com/?static`      | Card without animation        | Card without animation       |
+| `curl example.com/?plain`       | Card without colors or delay  | Card without colors or delay |
 | Browser, `http://example.com/`  | 301 to HTTPS                  | 301 to HTTPS                 |
 | Browser, `https://example.com/` | Card without colors           | Your website                 |
 | Any other path                  | 404                           | Your website                 |

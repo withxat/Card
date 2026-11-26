@@ -49,6 +49,7 @@ export default defineCard({
 ```
 
 - Logo 下方会自动加上 `curl 你的域名`。
+- 终端访问默认会逐行流式输出（约 0.4 秒）；配 `animate: false` 或加 `?static` 可一次输出。
 - 按终端显示宽度对齐，中文、日文、韩文占两格，不会错位。
 - `logo` 可以是任意 ASCII 字符画，用 [`figlet`](http://www.figlet.org/) 生成最方便。
 - 颜色只用终端的 8 种基础色，会跟随访问者的终端主题。
@@ -74,8 +75,9 @@ export default defineCard({
 
 | 请求                            | `ORIGIN_PASSTHROUGH: "false"` | `ORIGIN_PASSTHROUGH: "true"` |
 | ------------------------------- | ----------------------------- | ---------------------------- |
-| `curl example.com`              | 名片                          | 名片                         |
-| `curl example.com/?plain`       | 无颜色的名片                  | 无颜色的名片                 |
+| `curl example.com`              | 逐行动画名片                  | 逐行动画名片                 |
+| `curl example.com/?static`      | 无动画的彩色名片              | 无动画的彩色名片             |
+| `curl example.com/?plain`       | 无颜色、无延迟的名片          | 无颜色、无延迟的名片         |
 | 浏览器访问 `http://example.com/`  | 301 跳转到 HTTPS              | 301 跳转到 HTTPS             |
 | 浏览器访问 `https://example.com/` | 无颜色的名片                  | 你的网站                     |
 | 其他路径                        | 404                           | 你的网站                     |

@@ -6,6 +6,8 @@ export interface CardLink {
 }
 
 export interface CardConfig {
+	/** Stream the card line by line in terminals. Defaults to `true`. */
+	animate?: boolean
 	colors?: {
 		command?: Color
 		label?: Color
@@ -191,8 +193,105 @@ function ansi(segment: Segment): string {
 	return codes.length > 0 ? `${ESC}${codes.join(';')}m${segment.text}${RESET}` : segment.text
 }
 
+export function renderLines(rows: Row[], { color }: { color: boolean }): string[] {
+	return rows.map(row => row.map(segment => (color ? ansi(segment) : segment.text)).join(''))
+}
+
 export function renderText(rows: Row[], { color }: { color: boolean }): string {
-	return rows
-		.map(row => row.map(segment => (color ? ansi(segment) : segment.text)).join(''))
-		.join('\n')
+	return renderLines(rows, { color }).join('\n')
+}
+
+export type Sleep = (ms: number, signal?: AbortSignal) => Promise<void>
+
+const MIN_STEP_MS = 36
+const MAX_STEP_MS = 100
+const MAX_TOTAL_MS = 650
+
+/** Ease-out pacing between content lines: brisk at the top, settling on the last line. */
+export function lineDelays(contentLineCount: number): number[] {
+	const gaps = contentLineCount - 1
+
+	if (gaps <= 0) {
+		return []
+	}
+
+	const raw = Array.from({ length: gaps }, (_, index) => {
+		const progress = gaps === 1 ? 1 : index / (gaps - 1)
+
+		return MIN_STEP_MS + progress * progress * (MAX_STEP_MS - MIN_STEP_MS)
+	})
+	const total = raw.reduce((sum, ms) => sum + ms, 0)
+	const scale = total > MAX_TOTAL_MS ? MAX_TOTAL_MS / total : 1
+
+	return raw.map(ms => Math.round(ms * scale))
+}
+
+function defaultSleep(ms: number, signal?: AbortSignal): Promise<void> {
+	if (signal?.aborted) {
+		return Promise.resolve()
+	}
+
+	return new Promise((resolve) => {
+		const timer = setTimeout(() => {
+			signal?.removeEventListener('abort', onAbort)
+			resolve()
+		}, ms)
+
+		function onAbort(): void {
+			clearTimeout(timer)
+			resolve()
+		}
+
+		signal?.addEventListener('abort', onAbort, { once: true })
+	})
+}
+
+export function streamLines(lines: string[], sleep: Sleep = defaultSleep): ReadableStream<Uint8Array> {
+	const encoder = new TextEncoder()
+	const chunks = lines
+		.map((line, index) => ({
+			isContent: line !== '',
+			text: index < lines.length - 1 ? `${line}\n` : line,
+		}))
+		.filter(chunk => chunk.text !== '')
+	const delays = lineDelays(chunks.filter(chunk => chunk.isContent).length)
+	const abort = new AbortController()
+	let chunkIndex = 0
+	let delayIndex = 0
+	let pendingDelay = 0
+
+	return new ReadableStream<Uint8Array>({
+		cancel() {
+			abort.abort()
+		},
+		async pull(controller) {
+			if (pendingDelay > 0) {
+				const wait = pendingDelay
+
+				pendingDelay = 0
+				await sleep(wait, abort.signal)
+
+				if (abort.signal.aborted) {
+					return
+				}
+			}
+
+			const chunk = chunks[chunkIndex++]
+
+			if (!chunk) {
+				controller.close()
+				return
+			}
+
+			controller.enqueue(encoder.encode(chunk.text))
+
+			if (chunk.isContent && delayIndex < delays.length) {
+				pendingDelay = delays[delayIndex++]!
+			}
+
+			if (chunkIndex >= chunks.length) {
+				controller.close()
+			}
+		},
+	})
 }

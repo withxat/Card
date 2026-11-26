@@ -1,7 +1,7 @@
-import type { CardConfig } from './card.js'
+import type { CardConfig, Sleep } from './card.js'
 
 import defaultCard from '../card.config.js'
-import { layoutCard, renderText } from './card.js'
+import { layoutCard, renderLines, renderText, streamLines } from './card.js'
 
 export interface Env {
 	BROWSER_HTTPS_REDIRECT?: string
@@ -13,6 +13,7 @@ type Fetcher = (request: Request) => Promise<Response>
 interface Options {
 	card?: CardConfig
 	originFetch?: Fetcher
+	sleep?: Sleep
 }
 
 const COMMAND_LINE_CLIENTS = [
@@ -61,11 +62,25 @@ const RESPONSE_HEADERS = {
 	'x-content-type-options': 'nosniff',
 }
 
-function cardResponse(request: Request, card: CardConfig, { color }: { color: boolean }): Response {
+function cardResponse(
+	request: Request,
+	card: CardConfig,
+	{ animate, color, sleep }: { animate: boolean, color: boolean, sleep?: Sleep },
+): Response {
 	const url = new URL(request.url)
-	const text = renderText(layoutCard(card, url.host), { color })
+	const rows = layoutCard(card, url.host)
 
-	return new Response(text, {
+	if (animate) {
+		return new Response(streamLines(renderLines(rows, { color }), sleep), {
+			headers: {
+				...RESPONSE_HEADERS,
+				'content-type': 'text/plain; charset=UTF-8',
+				'x-accel-buffering': 'no',
+			},
+		})
+	}
+
+	return new Response(renderText(rows, { color }), {
 		headers: { ...RESPONSE_HEADERS, 'content-type': 'text/plain; charset=UTF-8' },
 	})
 }
@@ -81,7 +96,7 @@ function httpsRedirect(request: Request): Response {
 export async function handleRequest(
 	request: Request,
 	env: Env,
-	{ card = defaultCard, originFetch = fetch }: Options = {},
+	{ card = defaultCard, originFetch = fetch, sleep }: Options = {},
 ): Promise<Response> {
 	const passthrough = env.ORIGIN_PASSTHROUGH === 'true'
 
@@ -90,16 +105,25 @@ export async function handleRequest(
 	}
 
 	if (isCommandLineClient(request)) {
-		const color = !new URL(request.url).searchParams.has('plain')
+		const url = new URL(request.url)
+		const color = !url.searchParams.has('plain')
+		const animate = (
+			request.method === 'GET'
+			&& card.animate !== false
+			&& color
+			&& !url.searchParams.has('static')
+		)
 
-		return cardResponse(request, card, { color })
+		return cardResponse(request, card, { animate, color, sleep })
 	}
 
 	if (shouldRedirectBrowserToHttps(request, env)) {
 		return httpsRedirect(request)
 	}
 
-	return passthrough ? originFetch(request) : cardResponse(request, card, { color: false })
+	return passthrough
+		? originFetch(request)
+		: cardResponse(request, card, { animate: false, color: false })
 }
 
 export default {
