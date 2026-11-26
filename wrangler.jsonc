@@ -1,0 +1,31 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "card",
+	"main": "dist/index.js",
+	"compatibility_date": "2026-04-30",
+	// To serve the card on your own domain, add a route. With no website on the
+	// domain, let Cloudflare create the DNS record for you:
+	// "routes": [{ "pattern": "example.com", "custom_domain": true }],
+	"vars": {
+		"BROWSER_HTTPS_REDIRECT": "true",
+		"ORIGIN_PASSTHROUGH": "false"
+	},
+	"env": {
+		// The maintainer's deployment (`pnpm run deploy --env xat`): xat.sh already
+		// has a website, so only the apex root goes through the Worker.
+		"xat": {
+			"name": "card",
+			"workers_dev": false,
+			"routes": [
+				{
+					"pattern": "xat.sh",
+					"zone_name": "xat.sh"
+				}
+			],
+			"vars": {
+				"BROWSER_HTTPS_REDIRECT": "true",
+				"ORIGIN_PASSTHROUGH": "true"
+			}
+		}
+	}
+}

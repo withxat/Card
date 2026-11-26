@@ -1,102 +1,130 @@
 # Card
 
+English · [简体中文](README.zh-CN.md)
+
 A command-line business card for your domain.
 
 ```sh
 curl xat.sh
 ```
 
-Card lets a domain greet terminal users with a neofetch-style profile while the
-same domain keeps working as a normal website in browsers.
-
-## What It Feels Like
-
 <p>
   <img src="assets/demo.png" width="600" alt="preview" />
 </p>
 
-The output includes ANSI color in terminals that support it.
+Card is a Cloudflare Worker. Terminals get a neofetch-style card with ANSI colors;
+browsers get your existing website, or a plain-text card if the domain has no
+site yet. You describe the card in one file, [`card.config.ts`](card.config.ts).
 
-## Features
+## Get Your Own
 
-- **One domain, two experiences**: `curl xat.sh` shows a terminal card; browser
-  visits continue to load the original site.
-- **Root-only routing**: attach the Worker to the apex route pattern so existing
-  pages and assets stay out of the blast radius.
-- **CLI-aware response**: curl, wget, HTTPie, xh, aria2, Python Requests, Go's
-  HTTP client, and libwww-perl are recognized by user agent.
-- **Neofetch-style output**: styled plain text with ANSI colors, safe for normal
-  terminals and easy to customize.
-- **Origin passthrough**: browser traffic and non-root paths are forwarded with
-  `fetch(request)`.
-- **Browser-only HTTPS redirect**: plain `curl xat.sh` can work while browsers
-  still get redirected from HTTP to HTTPS.
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/withxat/card)
 
-## How It Works
+1. Click the button. Cloudflare copies this repository to your GitHub account and
+   deploys it to a `*.workers.dev` address.
+2. Edit `card.config.ts` in your copy and push. Cloudflare redeploys on every push.
+3. Point your domain at it (below), then run `curl your-domain.com`.
 
-Card is a Cloudflare Worker. It sits at the root of a proxied Cloudflare zone:
+Or by hand:
 
-```txt
-curl xat.sh  ->  Cloudflare Worker  ->  terminal card
-browser      ->  Cloudflare Worker  ->  original website
+```sh
+git clone https://github.com/withxat/card && cd card
+pnpm install
+pnpm run deploy
 ```
 
-The Worker only needs to see the apex root route. For this project that route is:
+## Make It Yours
 
-```txt
-xat.sh
+Everything on the card lives in [`card.config.ts`](card.config.ts):
+
+```ts
+export default defineCard({
+	name: 'Xat',
+	title: 'Design Engineer',
+	logo: ['__   __', '\\ \\ / /', ' \\ V / ', ' / . \\ ', '/_/ \\_\\'],
+	links: [
+		{ label: 'Site', value: 'https://xat.sh' },
+		{ label: 'Email', value: 'i@xat.sh' },
+	],
+	motto: 'Code with Love, Explore the World.',
+	colors: { logo: ['cyan', 'blue', 'magenta'], label: 'green', command: 'yellow' },
+})
 ```
 
-That means paths such as `/about`, `/blog`, and `/assets/app.js` keep behaving
-like the original website.
+- `curl <your domain>` is added under the logo automatically.
+- Columns are aligned by terminal width, so Chinese, Japanese, and Korean text lines up.
+- `logo` is any ASCII art; [`figlet`](http://www.figlet.org/) is an easy way to make one.
+- Colors are the eight terminal colors, so the card follows each visitor's theme.
 
-## Try It Locally
+## Connect Your Domain
+
+The domain must be a zone on Cloudflare.
+
+**The domain has no website.** Add a custom domain to
+[`wrangler.jsonc`](wrangler.jsonc); Cloudflare creates the DNS record. Browsers get
+the plain-text card.
+
+```jsonc
+"routes": [{ "pattern": "example.com", "custom_domain": true }]
+```
+
+**The domain already has a website.** Route only the apex root to the Worker and
+pass everything else through. The DNS record must be **Proxied**, or the Worker never
+runs.
+
+```jsonc
+"routes": [{ "pattern": "example.com", "zone_name": "example.com" }],
+"vars": { "BROWSER_HTTPS_REDIRECT": "true", "ORIGIN_PASSTHROUGH": "true" }
+```
+
+## Behavior
+
+| Request                         | `ORIGIN_PASSTHROUGH: "false"` | `ORIGIN_PASSTHROUGH: "true"` |
+| ------------------------------- | ----------------------------- | ---------------------------- |
+| `curl example.com`              | Card                          | Card                         |
+| `curl example.com/?plain`       | Card without colors           | Card without colors          |
+| Browser, `http://example.com/`  | 301 to HTTPS                  | 301 to HTTPS                 |
+| Browser, `https://example.com/` | Card without colors           | Your website                 |
+| Any other path                  | 404                           | Your website                 |
+
+Command-line clients are recognized by `User-Agent`: curl, wget, HTTPie, xh, aria2,
+Python Requests, Go's HTTP client, and libwww-perl. On Windows, use `curl.exe`;
+PowerShell's `curl` alias identifies itself as a browser.
+
+## Gotchas
+
+- **`curl example.com` prints nothing.** Cloudflare's **Always Use HTTPS** answers
+  plain HTTP with a redirect before the Worker runs, and curl does not follow
+  redirects. Turn it off; `BROWSER_HTTPS_REDIRECT: "true"` still sends browsers to
+  HTTPS.
+- **Browsers still see the old site.** Check that the DNS record is Proxied (orange
+  cloud) and that the route pattern matches the domain exactly.
+
+## Develop
 
 ```sh
 pnpm install
-pnpm --filter @withxat/card-worker run dev
+pnpm dev                  # http://localhost:8787
+curl localhost:8787       # in another terminal
 ```
 
-In another terminal:
+| Command          | Description                            |
+| ---------------- | -------------------------------------- |
+| `pnpm dev`       | Run the Worker locally                 |
+| `pnpm build`     | Bundle `src/index.ts` to `dist/` with tsdown |
+| `pnpm test`      | Run tests                              |
+| `pnpm typecheck` | Type-check                             |
+| `pnpm lint`      | Lint                                   |
+| `pnpm run deploy`| Build and deploy with Wrangler         |
 
-```sh
-curl localhost:8787
-```
-
-## Worker Guide
-
-The full setup lives in [`apps/worker/README.md`](apps/worker/README.md):
-
-- local development;
-- build and test commands;
-- Wrangler deploy flow;
-- Cloudflare DNS and route requirements;
-- `BROWSER_HTTPS_REDIRECT`;
-- custom card text and ANSI styling.
-
-## Project Structure
-
-```txt
-apps/worker/       Cloudflare Worker implementation
-packages/ui/       Shared React component library retained from the workspace
-```
-
-## Scripts
-
-| Command          | Description                    |
-| ---------------- | ------------------------------ |
-| `pnpm build`     | Build all packages             |
-| `pnpm test`      | Run tests                      |
-| `pnpm typecheck` | Type-check all packages        |
-| `pnpm lint`      | Lint all packages              |
-| `pnpm lint:fix`  | Lint and auto-fix all packages |
+xat.sh itself deploys with `pnpm run deploy --env xat`.
 
 ## Author
 
 **Card** © [Xat](https://github.com/withxat), released under the
 [MIT](LICENSE) License.<br>
 Authored and maintained by Xat with help from contributors
-([list](https://github.com/withxat/Card/graphs/contributors)).
+([list](https://github.com/withxat/card/graphs/contributors)).
 
 > [Blog](https://xat.sh) · GitHub [@withxat](https://github.com/withxat) ·
 > Telegram [@withxat](https://t.me/withxat) · X

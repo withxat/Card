@@ -1,8 +1,11 @@
 {
 	"extends": "@withxat/tsconfig",
 	"compilerOptions": {
-		"rootDir": "."
+		"lib": ["ES2024", "WebWorker"],
+		"rootDir": ".",
+		"module": "NodeNext",
+		"moduleResolution": "NodeNext",
+		"types": ["@cloudflare/workers-types", "node"]
 	},
-	"include": ["**/*"],
-	"exclude": ["apps/**/*", "packages/**/*"]
+	"include": ["src/**/*.ts", "card.config.ts", "eslint.config.ts"]
 }

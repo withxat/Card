@@ -1,10 +1,5 @@
 import { xat } from '@withxat/eslint-config'
 
-const config = xat({
-	ignores: [
-		'apps/**/*',
-		'packages/**/*',
-	],
-})
+const config = xat()
 
 export default config

@@ -4,24 +4,39 @@
 	"version": "1.0.0",
 	"private": true,
 	"packageManager": "pnpm@10.32.1",
-	"description": "A Cloudflare Worker domain card for command-line visitors",
+	"description": "A command-line business card for your domain, served by a Cloudflare Worker",
 	"author": "Xat <i@xat.sh>(https://xat.sh)",
 	"license": "MIT",
 	"scripts": {
-		"dev": "turbo dev",
-		"build": "turbo build",
-		"test": "turbo test",
-		"typecheck": "turbo typecheck",
-		"lint": "turbo lint",
-		"lint:fix": "turbo lint -- --fix"
+		"build": "tsdown src/index.ts --platform neutral --format esm --out-dir dist --clean",
+		"deploy": "pnpm run build && wrangler deploy",
+		"dev": "wrangler dev src/index.ts",
+		"test": "vitest run src",
+		"typecheck": "tsc --noEmit",
+		"lint": "eslint",
+		"lint:fix": "eslint --fix"
 	},
 	"devDependencies": {
-		"@withxat/eslint-config": "catalog:devtool",
-		"@withxat/tsconfig": "catalog:devtool",
-		"eslint": "catalog:devtool",
-		"jiti": "catalog:devtool",
-		"lefthook": "catalog:devtool",
-		"turbo": "catalog:devtool",
-		"typescript": "catalog:devtool"
+		"@cloudflare/workers-types": "^5.20261125.1",
+		"@types/node": "^24.10.0",
+		"@withxat/eslint-config": "^1.1.8",
+		"@withxat/tsconfig": "^1.0.5",
+		"eslint": "^10.15.0",
+		"jiti": "^2.6.1",
+		"lefthook": "^2.1.5",
+		"tsdown": "^0.23.7",
+		"typescript": "^6.0.2",
+		"vitest": "^4.0.16",
+		"wrangler": "^4.168.0"
+	},
+	"cloudflare": {
+		"bindings": {
+			"BROWSER_HTTPS_REDIRECT": {
+				"description": "`true` redirects browsers from `http://` to `https://` while `curl` keeps getting the card over plain HTTP."
+			},
+			"ORIGIN_PASSTHROUGH": {
+				"description": "`true` when your domain already has a website behind Cloudflare: browsers and other paths go to it. `false` serves a plain-text card instead."
+			}
+		}
 	}
 }

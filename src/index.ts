@@ -1,33 +1,19 @@
+import type { CardConfig } from './card.js'
+
+import defaultCard from '../card.config.js'
+import { layoutCard, renderText } from './card.js'
+
 export interface Env {
 	BROWSER_HTTPS_REDIRECT?: string
-	CARD_TEXT?: string
+	ORIGIN_PASSTHROUGH?: string
 }
 
 type Fetcher = (request: Request) => Promise<Response>
 
-const ESC = '\x1B['
-const RESET = `${ESC}0m`
-const DIM = `${ESC}2m`
-const BOLD = `${ESC}1m`
-const CYAN = `${ESC}36m`
-const BLUE = `${ESC}34m`
-const MAGENTA = `${ESC}35m`
-const GREEN = `${ESC}32m`
-const YELLOW = `${ESC}33m`
-const WHITE = `${ESC}37m`
-
-const DEFAULT_CARD = [
-	'',
-	`${CYAN}      __   __     ${BOLD}${WHITE}Xat${RESET}`,
-	`${CYAN}      \\ \\ / /     ${DIM}Design Engineer${RESET}`,
-	`${BLUE}       \\ V /      ${DIM}────────────────${RESET}`,
-	`${MAGENTA}       / . \\      ${GREEN}Site${RESET}    ${WHITE}https://xat.sh${RESET}`,
-	`${MAGENTA}      /_/ \\_\\     ${GREEN}GitHub${RESET}  ${WHITE}https://github.com/withxat${RESET}`,
-	`${YELLOW}                  ${GREEN}X${RESET}       ${WHITE}https://x.com/withxat${RESET}`,
-	`${YELLOW}    ${BOLD}curl xat.sh${RESET}   ${GREEN}Email${RESET}   ${WHITE}i@xat.sh${RESET}`,
-	`${DIM}                  Code with Love, Explore the World.${RESET}`,
-	'',
-].join('\n')
+interface Options {
+	card?: CardConfig
+	originFetch?: Fetcher
+}
 
 const COMMAND_LINE_CLIENTS = [
 	'curl',
@@ -69,13 +55,18 @@ function shouldRedirectBrowserToHttps(request: Request, env: Env): boolean {
 	)
 }
 
-function cardResponse(env: Env): Response {
-	return new Response(env.CARD_TEXT ?? DEFAULT_CARD, {
-		headers: {
-			'cache-control': 'no-store',
-			'content-type': 'text/plain; charset=UTF-8',
-			'x-content-type-options': 'nosniff',
-		},
+const RESPONSE_HEADERS = {
+	'cache-control': 'no-store',
+	'vary': 'User-Agent',
+	'x-content-type-options': 'nosniff',
+}
+
+function cardResponse(request: Request, card: CardConfig, { color }: { color: boolean }): Response {
+	const url = new URL(request.url)
+	const text = renderText(layoutCard(card, url.host), { color })
+
+	return new Response(text, {
+		headers: { ...RESPONSE_HEADERS, 'content-type': 'text/plain; charset=UTF-8' },
 	})
 }
 
@@ -90,21 +81,25 @@ function httpsRedirect(request: Request): Response {
 export async function handleRequest(
 	request: Request,
 	env: Env,
-	originFetch: Fetcher = fetch,
+	{ card = defaultCard, originFetch = fetch }: Options = {},
 ): Promise<Response> {
+	const passthrough = env.ORIGIN_PASSTHROUGH === 'true'
+
 	if (!isRootRequest(request)) {
-		return originFetch(request)
+		return passthrough ? originFetch(request) : new Response('Not Found\n', { status: 404 })
 	}
 
 	if (isCommandLineClient(request)) {
-		return cardResponse(env)
+		const color = !new URL(request.url).searchParams.has('plain')
+
+		return cardResponse(request, card, { color })
 	}
 
 	if (shouldRedirectBrowserToHttps(request, env)) {
 		return httpsRedirect(request)
 	}
 
-	return originFetch(request)
+	return passthrough ? originFetch(request) : cardResponse(request, card, { color: false })
 }
 
 export default {
