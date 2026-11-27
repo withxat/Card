@@ -9,7 +9,7 @@ curl xat.sh
 ```
 
 <p>
-  <img src="assets/demo.png" width="600" alt="预览" />
+  <img src="assets/demo.gif" width="600" alt="预览" />
 </p>
 
 Card 是一个 Cloudflare Worker。终端访问时返回一张 neofetch 风格的彩色名片；浏览器访问时照常打开你原来的网站，域名还没有网站的话，就返回无颜色的纯文本名片。名片内容只写在一个文件里：[`card.config.ts`](card.config.ts)。

@@ -9,7 +9,7 @@ curl xat.sh
 ```
 
 <p>
-  <img src="assets/demo.png" width="600" alt="preview" />
+  <img src="assets/demo.gif" width="600" alt="preview" />
 </p>
 
 Card is a Cloudflare Worker. Terminals get a neofetch-style card with ANSI colors;
